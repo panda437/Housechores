@@ -32,7 +32,7 @@ export default function TodayPage() {
                 const usersData = await usersRes.json();
 
                 if (Array.isArray(choresData)) setChores(choresData);
-                if (Array.isArray(usersData)) setUsers(usersData.filter((u: any) => u.role === 'player'));
+                if (Array.isArray(usersData)) setUsers(usersData);
 
                 setLoading(false);
             } catch (err) {
