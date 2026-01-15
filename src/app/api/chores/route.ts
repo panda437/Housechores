@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Chore from '@/models/Chore';
+import ChoreLog from '@/models/ChoreLog';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import {
+    startOfDay,
+    startOfWeek,
+    startOfMonth,
+} from 'date-fns';
 
 export async function GET(request: Request) {
     try {
@@ -11,8 +17,35 @@ export async function GET(request: Request) {
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const houseId = (session.user as any).houseId;
-        const chores = await Chore.find({ houseId, active: true });
-        return NextResponse.json(chores);
+        const chores = await Chore.find({ houseId, active: true }).lean();
+
+        // Calculate completion status for each chore
+        const now = new Date();
+        const choresWithStatus = await Promise.all(chores.map(async (chore: any) => {
+            let periodStart = new Date(0); // For 'once'
+
+            if (chore.repeatType === 'daily') {
+                periodStart = startOfDay(now);
+            } else if (chore.repeatType === 'weekly') {
+                periodStart = startOfWeek(now);
+            } else if (chore.repeatType === 'monthly') {
+                periodStart = startOfMonth(now);
+            }
+
+            // Check if there is any log in this period
+            const lastLog = await ChoreLog.findOne({
+                choreId: chore._id,
+                completedAt: { $gte: periodStart }
+            }).sort({ completedAt: -1 });
+
+            return {
+                ...chore,
+                isCompleted: !!lastLog,
+                lastCompletedAt: lastLog?.completedAt || null
+            };
+        }));
+
+        return NextResponse.json(choresWithStatus);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

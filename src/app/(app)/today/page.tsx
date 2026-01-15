@@ -5,7 +5,7 @@ import { Header } from '@/components/Header';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { BottomNav } from '@/components/BottomNav';
-import { Flame, Loader2, Sparkles, Zap } from 'lucide-react';
+import { Flame, Loader2, Sparkles, Zap, CheckCircle2 } from 'lucide-react';
 import { fireConfetti } from '@/lib/confetti';
 import { CompleteChoreModal } from '@/components/CompleteChoreModal';
 import { useSession } from 'next-auth/react';
@@ -19,26 +19,26 @@ export default function TodayPage() {
     const [activeChore, setActiveChore] = useState<any | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const fetchData = async () => {
+        try {
+            const [choresRes, usersRes] = await Promise.all([
+                fetch('/api/chores'),
+                fetch('/api/users')
+            ]);
+
+            const choresData = await choresRes.json();
+            const usersData = await usersRes.json();
+
+            if (Array.isArray(choresData)) setChores(choresData);
+            if (Array.isArray(usersData)) setUsers(usersData);
+
+            setLoading(false);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // HouseId is now pulled from session by the API
-                const [choresRes, usersRes] = await Promise.all([
-                    fetch('/api/chores'),
-                    fetch('/api/users')
-                ]);
-
-                const choresData = await choresRes.json();
-                const usersData = await usersRes.json();
-
-                if (Array.isArray(choresData)) setChores(choresData);
-                if (Array.isArray(usersData)) setUsers(usersData);
-
-                setLoading(false);
-            } catch (err) {
-                console.error(err);
-            }
-        };
         fetchData();
     }, []);
 
@@ -58,7 +58,8 @@ export default function TodayPage() {
 
             if (res.ok) {
                 fireConfetti();
-                setChores(chores.filter(c => c._id !== activeChore._id));
+                // Instead of filtering out, we refresh data to get correct isCompleted status
+                await fetchData();
                 setActiveChore(null);
             }
         } catch (e) {
@@ -68,8 +69,16 @@ export default function TodayPage() {
         }
     };
 
-    const repeatingChores = chores.filter(c => ['daily', 'weekly', 'monthly'].includes(c.repeatType));
-    const oneTimeChores = chores.filter(c => c.repeatType === 'once');
+    // Sorting Helper: Incomplete first, then completed
+    const sortChores = (list: any[]) => {
+        return [...list].sort((a, b) => {
+            if (a.isCompleted === b.isCompleted) return 0;
+            return a.isCompleted ? 1 : -1;
+        });
+    };
+
+    const repeatingChores = sortChores(chores.filter(c => ['daily', 'weekly', 'monthly'].includes(c.repeatType)));
+    const oneTimeChores = sortChores(chores.filter(c => c.repeatType === 'once'));
 
     return (
         <main className="pb-24">
@@ -108,7 +117,7 @@ export default function TodayPage() {
                             </h2>
                             <div className="space-y-4">
                                 {repeatingChores.map((chore) => (
-                                    <ChoreCard key={chore._id} chore={chore} onClick={() => setActiveChore(chore)} />
+                                    <ChoreCard key={chore._id} chore={chore} onClick={() => !chore.isCompleted && setActiveChore(chore)} />
                                 ))}
                             </div>
                         </section>
@@ -123,7 +132,7 @@ export default function TodayPage() {
                             </h2>
                             <div className="space-y-4">
                                 {oneTimeChores.map((chore) => (
-                                    <ChoreCard key={chore._id} chore={chore} onClick={() => setActiveChore(chore)} />
+                                    <ChoreCard key={chore._id} chore={chore} onClick={() => !chore.isCompleted && setActiveChore(chore)} />
                                 ))}
                             </div>
                         </section>
@@ -149,31 +158,38 @@ export default function TodayPage() {
 function ChoreCard({ chore, onClick }: { chore: any; onClick: () => void }) {
     return (
         <Card
-            className="relative overflow-hidden group cursor-pointer active:scale-95 transition-all"
+            className={`relative overflow-hidden group transition-all text-left ${chore.isCompleted ? 'opacity-60 grayscale-[0.5] scale-[0.98]' : 'cursor-pointer active:scale-95'}`}
             onClick={onClick}
         >
             <div className="flex justify-between items-center relative z-10">
-                <div>
-                    <h3 className="text-xl font-bold text-slate-800">{chore.name}</h3>
+                <div className={chore.isCompleted ? 'line-through decoration-slate-400 decoration-2' : ''}>
+                    <h3 className={`text-xl font-bold ${chore.isCompleted ? 'text-slate-400' : 'text-slate-800'}`}>{chore.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="flex items-center gap-1 text-amber-500 font-black text-sm">
+                        <span className={`flex items-center gap-1 font-black text-sm ${chore.isCompleted ? 'text-slate-300' : 'text-amber-500'}`}>
                             <Flame className="w-4 h-4" />
                             {chore.points} PTS
                         </span>
                         {chore.repeatType !== 'daily' && chore.repeatType !== 'once' && (
-                            <span className="text-[10px] font-black uppercase text-indigo-400 bg-indigo-50 px-1.5 py-0.5 rounded">
+                            <span className={`text-[10px] font-black uppercase px-1.5 py-0.5 rounded ${chore.isCompleted ? 'bg-slate-50 text-slate-300' : 'text-indigo-400 bg-indigo-50'}`}>
                                 {chore.repeatType}
+                            </span>
+                        )}
+                        {chore.isCompleted && (
+                            <span className="text-[10px] font-black uppercase text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> Mission Done
                             </span>
                         )}
                     </div>
                 </div>
 
-                <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                    <Sparkles className="w-5 h-5" />
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${chore.isCompleted ? 'bg-emerald-50 text-emerald-500' : 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white'}`}>
+                    {chore.isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
                 </div>
             </div>
 
-            <div className="absolute -top-4 -right-4 w-12 h-12 bg-indigo-50 rounded-full group-hover:scale-[10] transition-transform duration-700 opacity-30 -z-0" />
+            {!chore.isCompleted && (
+                <div className="absolute -top-4 -right-4 w-12 h-12 bg-indigo-50 rounded-full group-hover:scale-[10] transition-transform duration-700 opacity-30 -z-0" />
+            )}
         </Card>
     );
 }
