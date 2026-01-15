@@ -109,7 +109,7 @@ function PodiumEntry({ rank, user, height }: { rank: number; user: any; height: 
             <motion.div
                 initial={{ height: 0 }}
                 animate={{ height }}
-                className={`w-full ${colors} rounded-t-3xl opacity-20 flex items-center justify-center font-black text-4xl`}
+                className={`w-full ${colors} rounded-t-3xl opacity-30 flex items-center justify-center font-black text-4xl border-x border-t border-white/20`}
             >
                 {rank}
             </motion.div>

@@ -13,30 +13,32 @@ export async function GET(request: Request) {
 
         const houseId = (session.user as any).houseId;
 
+        // Fetch all users in the house first
+        const allUsers = await User.find({ houseId }).select('name avatarUrl');
+
         // Aggregate points from logs
         const logs = await ChoreLog.aggregate([
-            { $match: { houseId: (session.user as any).houseId } }, // Ensure scoped to house
+            { $match: { houseId } },
             {
                 $group: {
                     _id: '$userId',
                     totalPoints: { $sum: '$points' },
                 },
             },
-            { $sort: { totalPoints: -1 } },
         ]);
 
-        // Populate user details
-        const leaderboard = await Promise.all(
-            logs.map(async (entry) => {
-                const user = await User.findById(entry._id).select('name avatarUrl');
-                return {
-                    id: entry._id,
-                    name: user?.name || 'Unknown Hero',
-                    avatarUrl: user?.avatarUrl || '👤',
-                    points: entry.totalPoints,
-                };
-            })
-        );
+        // Map points to users
+        const pointsMap = logs.reduce((acc: any, log: any) => {
+            acc[log._id.toString()] = log.totalPoints;
+            return acc;
+        }, {});
+
+        const leaderboard = allUsers.map(user => ({
+            id: user._id,
+            name: user.name,
+            avatarUrl: user.avatarUrl || '👤',
+            points: pointsMap[user._id.toString()] || 0
+        })).sort((a, b) => b.points - a.points);
 
         return NextResponse.json(leaderboard);
     } catch (error: any) {
