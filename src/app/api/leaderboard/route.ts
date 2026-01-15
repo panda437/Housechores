@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import dbConnect from '@/lib/mongodb';
 import ChoreLog from '@/models/ChoreLog';
 import User from '@/models/User';
@@ -12,13 +13,14 @@ export async function GET(request: Request) {
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const houseId = (session.user as any).houseId;
+        const houseObjectId = new mongoose.Types.ObjectId(houseId);
 
         // Fetch all users in the house first
         const allUsers = await User.find({ houseId }).select('name avatarUrl');
 
         // Aggregate points from logs
         const logs = await ChoreLog.aggregate([
-            { $match: { houseId } },
+            { $match: { houseId: houseObjectId } },
             {
                 $group: {
                     _id: '$userId',
