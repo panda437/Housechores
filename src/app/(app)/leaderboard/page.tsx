@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { BottomNav } from '@/components/BottomNav';
 import { Trophy, Medal, Crown, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 export default function LeaderboardPage() {
     const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -54,10 +56,20 @@ export default function LeaderboardPage() {
                             </div>
                         </>
                     ) : (
-                        <Card className="text-center py-12">
-                            <Trophy className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                            <p className="text-slate-500 font-medium">No points awarded yet. Let's get moving!</p>
-                        </Card>
+                        <div className="py-20 text-center">
+                            <div className="w-24 h-24 bg-amber-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 text-4xl">
+                                🏆
+                            </div>
+                            <h2 className="text-3xl font-black text-slate-800 mb-4">No Heroes Yet!</h2>
+                            <p className="text-slate-500 font-medium mb-10 leading-relaxed max-w-[240px] mx-auto">
+                                Points are waiting to be claimed. Add your family and start the quest!
+                            </p>
+                            <Link href="/admin/users">
+                                <Button size="lg" className="w-full h-16 rounded-3xl gap-2 shadow-xl shadow-amber-100 bg-amber-400 hover:bg-amber-500 text-indigo-900 border-none">
+                                    Add Family Members
+                                </Button>
+                            </Link>
+                        </div>
                     )}
                 </div>
             )}

@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { BottomNav } from '@/components/BottomNav';
 import { BarChart3, Clock, TrendingUp, Loader2, ArrowUpRight } from 'lucide-react';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 export default function AnalyticsPage() {
     const [logs, setLogs] = useState<any[]>([]);
@@ -29,6 +31,21 @@ export default function AnalyticsPage() {
             {loading ? (
                 <div className="flex justify-center py-20">
                     <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                </div>
+            ) : logs.length === 0 ? (
+                <div className="px-6 py-20 text-center">
+                    <div className="w-24 h-24 bg-pink-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 text-4xl">
+                        📈
+                    </div>
+                    <h2 className="text-3xl font-black text-slate-800 mb-4">No Data Yet!</h2>
+                    <p className="text-slate-500 font-medium mb-10 leading-relaxed max-w-[240px] mx-auto">
+                        Complete your first mission to see your family's progress and insights.
+                    </p>
+                    <Link href="/today">
+                        <Button size="lg" className="w-full h-16 rounded-3xl gap-2 shadow-xl shadow-pink-100 bg-pink-500 hover:bg-pink-600 text-white border-none">
+                            Go to Mission Control
+                        </Button>
+                    </Link>
                 </div>
             ) : (
                 <div className="px-6 space-y-6">
@@ -61,11 +78,6 @@ export default function AnalyticsPage() {
                     </h2>
 
                     <div className="space-y-4">
-                        {logs.length === 0 && (
-                            <p className="text-center text-slate-400 py-10 font-medium italic">
-                                No logs found yet.
-                            </p>
-                        )}
                         {logs.map((log) => (
                             <div key={log._id} className="flex items-center gap-4 bg-white p-4 rounded-3xl shadow-sm border border-slate-100">
                                 <div className="text-2xl w-12 h-12 flex items-center justify-center bg-slate-50 rounded-2xl">

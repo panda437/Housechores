@@ -9,6 +9,7 @@ import { Flame, Loader2, Sparkles, Zap } from 'lucide-react';
 import { fireConfetti } from '@/lib/confetti';
 import { CompleteChoreModal } from '@/components/CompleteChoreModal';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
 export default function TodayPage() {
     const { data: session } = useSession();
@@ -81,39 +82,52 @@ export default function TodayPage() {
                 <div className="flex justify-center py-20">
                     <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
                 </div>
+            ) : chores.length === 0 ? (
+                <div className="px-6 py-20 text-center">
+                    <div className="w-24 h-24 bg-indigo-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 text-4xl">
+                        🚀
+                    </div>
+                    <h2 className="text-3xl font-black text-slate-800 mb-4">No Missions Yet!</h2>
+                    <p className="text-slate-500 font-medium mb-10 leading-relaxed">
+                        Your household is ready for a hero. Head to the Admin HQ to set up your first missions.
+                    </p>
+                    <Link href="/admin/chores">
+                        <Button size="lg" className="w-full h-16 rounded-3xl gap-2 shadow-xl shadow-indigo-100">
+                            <Zap className="w-5 h-5 fill-white" /> Gear Up Now
+                        </Button>
+                    </Link>
+                </div>
             ) : (
                 <div className="px-6 space-y-8">
                     {/* Repeating Chores Section */}
-                    <section>
-                        <h2 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <Zap className="w-4 h-4 fill-indigo-400" />
-                            Repeating Missions
-                        </h2>
-                        <div className="space-y-4">
-                            {repeatingChores.length === 0 && (
-                                <p className="text-slate-400 text-sm font-medium italic">No missions today!</p>
-                            )}
-                            {repeatingChores.map((chore) => (
-                                <ChoreCard key={chore._id} chore={chore} onClick={() => setActiveChore(chore)} />
-                            ))}
-                        </div>
-                    </section>
+                    {repeatingChores.length > 0 && (
+                        <section>
+                            <h2 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <Zap className="w-4 h-4 fill-indigo-400" />
+                                Repeating Missions
+                            </h2>
+                            <div className="space-y-4">
+                                {repeatingChores.map((chore) => (
+                                    <ChoreCard key={chore._id} chore={chore} onClick={() => setActiveChore(chore)} />
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
                     {/* One-time Chores Section */}
-                    <section>
-                        <h2 className="text-xs font-black text-pink-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 fill-pink-400" />
-                            One-time Quests
-                        </h2>
-                        <div className="space-y-4">
-                            {oneTimeChores.length === 0 && (
-                                <p className="text-slate-400 text-sm font-medium italic">No special quests available.</p>
-                            )}
-                            {oneTimeChores.map((chore) => (
-                                <ChoreCard key={chore._id} chore={chore} onClick={() => setActiveChore(chore)} />
-                            ))}
-                        </div>
-                    </section>
+                    {oneTimeChores.length > 0 && (
+                        <section>
+                            <h2 className="text-xs font-black text-pink-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 fill-pink-400" />
+                                One-time Quests
+                            </h2>
+                            <div className="space-y-4">
+                                {oneTimeChores.map((chore) => (
+                                    <ChoreCard key={chore._id} chore={chore} onClick={() => setActiveChore(chore)} />
+                                ))}
+                            </div>
+                        </section>
+                    )}
                 </div>
             )}
 
